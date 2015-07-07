@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ssm.crm520.mapper.PotentialCustomerMapper">
+	<!-- 建表 -->
+	<update id="createTable">
+		CREATE TABLE if not exists `t_potentialcustomer` (
+		`id` bigint(20) NOT NULL AUTO_INCREMENT,
+		`source_id` bigint(30) DEFAULT
+		NULL,
+		`name` varchar(30) DEFAULT NULL,
+		`odds` int(3) DEFAULT NULL,
+		`description` varchar(150) DEFAULT NULL,
+		`linkman` varchar(32) DEFAULT
+		NULL,
+		`tel` varchar(32) DEFAULT NULL,
+		`createMan_id` bigint(30) DEFAULT
+		NULL,
+		`createTime` date DEFAULT NULL,
+		PRIMARY KEY (`id`),
+		KEY
+		`createMan_id` (`createMan_id`),
+		KEY `source_id` (`source_id`),
+		CONSTRAINT `t_potentialcustomer_ibfk_2` FOREIGN KEY (`source_id`)
+		REFERENCES
+		`t_systemdictionarydetail` (`id`),
+		CONSTRAINT
+		`t_potentialcustomer_ibfk_1` FOREIGN KEY (`createMan_id`) REFERENCES
+		`t_employee` (`id`)
+		) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT
+		CHARSET=utf8;
+	</update>
+	<!-- 增加 -->
+	<insert id="save" parameterType="PotentialCustomer"
+		useGeneratedKeys="true">
+		insert into t_potentialCustomer
+		(source_id,name,odds,description,linkman,tel,createMan_id,createTime)
+		values(#{source.id},#{name},#{odds},#{description},#{linkman},#{tel},#{createMan.id},#{createTime})
+	</insert>
+	<!-- 删除 -->
+	<delete id="delete" parameterType="long">
+		delete from
+		t_potentialCustomer where id=#{id}
+	</delete>
+	<!-- 修改 -->
+	<update id="update" parameterType="PotentialCustomer">
+		update t_potentialCustomer set
+		source_id=#{source.id},name=#{name},odds=#{odds},description=#{description},linkman=#{linkman},
+		tel=#{tel},createMan_id=#{createMan.id},createTime=#{createTime}
+		where
+		id=#{id}
+	</update>
+	
+	<!-- 查询单个 -->
+	<select id="get" parameterType="long" resultType="PotentialCustomer">
+		select * from
+		t_potentialCustomer where id=#{id}
+	</select>
+	<!-- 查询所有 -->
+	<select id="getAll" resultType="PotentialCustomer">
+		select * from t_potentialCustomer
+	</select>
+	<select id="getSystemDictionaryDetail" resultType="SystemDictionaryDetail"
+		parameterType="long">
+		select * from t_systemdictionarydetail where id=#{id}
+	</select>
+	<select id="getEmployee" resultType="Employee" parameterType="long">
+		select * from t_employee where id=#{id}
+	</select>
+	
+	
+<!-- 	结果集的封装 -->
+	<resultMap type="PotentialCustomer" id="potentialCustomerMapper">
+		<association select="getSystemDictionaryDetail" property="source"
+			column="source_id" javaType="SystemDictionaryDetail">
+		</association>
+		<association property="createMan" column="createman_id" javaType="Employee" select="getEmployee"></association>
+	</resultMap>
+	
+<!-- 	<resultmap type="employee" id="employeeMapper">  -->
+<!-- 	<association select="getemployee" property="employee" column="employee_id"  -->
+<!--  		javatype="Employee"></association>  -->
+<!--     </resultmap>  -->
+	<select id="findQuery" resultMap="potentialCustomerMapper">
+		select * from t_potentialCustomer
+		<include refid="commonSql" />
+		<if test="sort!=null and order !=null">
+			order by ${sort} ${order}
+		</if>
+		limit #{start},#{rows}
+	</select>
+	<select id="findCount" resultType="long">
+		select count(*) from t_potentialCustomer
+		<include refid="commonSql" />
+	</select>
+	<sql id="commonSql">
+		<where>
+			<if test="source_id!=null">
+				and (source_id = #{source_id})
+			</if>
+			<if test="name!=null">
+				and name like #{name}
+			</if>
+			<if test="maxOdds!=null">
+				and odds &lt; #{maxOdds}
+			</if>
+			<if test="minOdds!=null">
+				and odds >= #{minOdds}
+			</if>
+
+			<if test="linkman!=null">
+				and linkman like #{linkman}
+			</if>
+			<if test="tel!=null">
+				and tel like #{tel}
+			</if>
+
+			<if test="createMan_id!=null">
+				and createMan_id = #{createMan_id}
+			</if>
+			<if test="maxCreateTime!=null">
+				and createTime >= #{maxCreateTime}
+			</if>
+			<if test="minCreateTime!=null">
+				and createTime &lt; #{minCreateTime}
+			</if>
+
+		</where>
+	</sql>
+</mapper>

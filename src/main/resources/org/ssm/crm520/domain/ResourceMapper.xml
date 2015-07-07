@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.ResourceMapper">
+
+	<update id="createTable">
+		CREATE TABLE IF NOT EXISTS `t_resource` (
+		  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+		  `name` varchar(20) DEFAULT NULL,
+		  `resourceAddr` varchar(100) DEFAULT NULL,
+		  PRIMARY KEY (`id`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+		
+	</update>
+	<insert id="save" useGeneratedKeys="true" parameterType="Resource">
+		insert into t_resource
+		(name,resourceAddr)
+		VALUES
+		(#{name},#{resourceAddr})
+	</insert>
+	<update id="update" parameterType="Resource">
+		update t_resource set name=#{name},resourceAddr=#{resourceAddr} 
+		where id = #{id}
+	</update>
+	<delete id="delete">
+		delete from t_resource where id = #{id}
+	</delete>
+	
+	<select id="get" resultType="Resource" parameterType="long">
+		select *
+		from t_resource
+		where id = #{id}
+	</select>
+
+	<select id="getAll"  resultType="Resource">
+		select * from t_resource
+	</select>
+
+	<select id="findQuery" parameterType="ResourceQuery"  resultType="Resource">
+		select * from t_resource
+		<where>
+			<if test="name!=null">
+				name like #{name}	
+			</if>
+		</where>
+		limit #{start},#{rows}
+	</select>
+	<select id="findCount" parameterType="ResourceQuery" resultType="long">
+		select count(*) from t_resource 
+		<where>
+			<if test="name!=null">
+				name like #{name}	
+			</if>
+		</where>
+	</select>
+
+</mapper>

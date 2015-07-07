@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ssm.crm520.mapper.DepositOrderMapper">
+	
+	<select id="createTable">
+		create table if not exists t_depositOrder(
+			id bigint primary key auto_increment,
+			sn varchar(20),
+			sginDate date,
+			depositAmount decimal,
+			intro varchar(100),
+			saler_id bigint,
+			customer_id bigint
+		)
+		
+	</select>
+	
+	<insert id="save" parameterType="DepositOrder"  useGeneratedKeys="true">
+		insert into t_depositOrder(sn,sginDate,depositAmount,intro,saler_id,customer_id) 
+		values(#{sn},#{sginDate},#{depositAmount},#{intro},#{saler.id},#{customer.id})
+	</insert>
+	
+	<delete id="delete" parameterType="long">
+		delete from t_depositOrder where id = #{id}
+	</delete>
+	
+	<update id="update" parameterType="DepositOrder">
+		update t_depositOrder set sn=#{sn},sginDate=#{sginDate},depositAmount=#{depositAmount},intro=#{intro},saler_id=#{saler.id},customer_id=#{customer.id} where id =#{id}
+	</update>
+	
+	<sql id="replaceSql">
+		select deposit.*,emp.id eid,emp.username euname,emp.truename etname,emp.password epwd,emp.tel etel,emp.email empemail,emp.inTime etime,emp.status estatus,customer.id cid,customer.name cname,
+		customer.age cage,customer.gender cgender,customer.tel ctel,customer.email cemail,customer.qq cqq,customer.weChat cweChat,customer.time ctime
+		from t_depositOrder deposit left join t_employee emp on deposit.saler_id=emp.id left join t_customer customer on deposit.customer_id=customer.id
+	</sql>
+	
+	
+	<resultMap type="DepositOrder" id="depositMap">
+		<id property="id" column="id"/>
+		<result property="sn" column="sn"/>
+		<result property="sginDate" column="sginDate"/>
+		<result property="depositAmount" column="depositAmount"/>
+		<result property="intro" column="intro"/>
+		<association property="saler" column="saler_id" javaType="Employee">
+			<id property="id" column="eid"/>
+			<result property="username" column="euname"/>
+			<result property="truename" column="etname"/>
+			<result property="password" column="epwd"/>
+			<result property="tel" column="etel"/>
+			<result property="email" column="empemail"/>
+			<result property="inTime" column="etime"/>
+			<result property="status" column="estatus"/>
+		</association>
+		<association property="customer" column="customer_id" javaType="Customer">
+			<id property="id" column="cid"/>
+			<result property="name" column="cname"/>
+			<result property="age" column="cage"/>
+			<result property="gender" column="cgender"/>
+			<result property="tel" column="ctel"/>
+			<result property="email" column="cemail"/>
+			<result property="qq" column="cqq"/>
+			<result property="weChat" column="cweChat"/>
+			<result property="time" column="ctime"/>
+		</association>
+		
+	</resultMap>
+	
+	<select id="get" parameterType="long" resultMap="depositMap">
+		<include refid="replaceSql"/> where deposit.id = #{id}
+	</select>
+	
+	<select id="getAll" resultMap="depositMap">
+		<include refid="replaceSql"/>
+	</select>
+	
+	<sql id="queryCondition">
+		<where>
+			<if test="sn!=null and sn!=''">
+				deposit.sn like #{sn}
+			</if>
+			<if test="minDate!=null">
+				and deposit.sginDate >= #{minDate}
+			</if>
+			<if test="maxDate!=null">
+				and deposit.sginDate &lt;= #{maxDate}
+			</if>
+			<if test="saler!=null and saler!=''">
+				and (emp.username like #{saler} or emp.truename like #{saler})
+			</if>
+			<if test="customer!=null and customer!=''">
+				and customer.name like #{customer}
+			</if>
+			<if test="keyword!=null">
+				and (emp.username like #{keyword} or emp.truename like #{keyword} or deposit.sn like #{keyword} or customer.name like #{keyword})
+			</if>
+		</where>
+			<if test="groupBy!=null and groupBy!=''">
+				group by ${groupBy} 
+			</if>
+	</sql>
+	
+	<select id="findQuery" parameterType="DepositOrderQuery" resultMap="depositMap">
+		<include refid="replaceSql"/> <include refid="queryCondition"/> limit #{start},#{rows}
+	</select>
+	
+	<select id="findCount" resultType="long" parameterType="DepositOrderQuery">
+		select count(deposit.id)
+		from t_depositOrder deposit left join t_employee emp on deposit.saler_id=emp.id 
+		left join t_customer customer on deposit.customer_id=customer.id <include refid="queryCondition"/>
+	</select>
+	
+	
+	<!-- 分组查询 -->
+	<select id="getGroupBy" parameterType="DepositOrderQuery" resultType="map">
+		select ${groupBy} groupName,count(*) num
+		from t_depositOrder deposit left join t_employee emp on deposit.saler_id=emp.id
+		left join t_customer customer on deposit.customer_id=customer.id
+		<include refid="queryCondition"/> 
+	</select>
+	
+	<select id="getListBy"  parameterType="map" resultMap="depositMap">
+		<include refid="replaceSql"/>
+		<where>
+			<if test="query.sn!=null and query.sn!=''">
+				deposit.sn like #{query.sn}
+			</if>
+			<if test="query.minDate!=null">
+				and deposit.sginDate >= #{query.minDate}
+			</if>
+			<if test="query.maxDate!=null">
+				and deposit.sginDate &lt;= #{query.maxDate}
+			</if>
+			<if test="query.saler!=null and query.saler!=''">
+				and (emp.username like #{query.saler} or emp.truename like #{query.saler})
+			</if>
+			<if test="query.customer!=null and query.customer!=''">
+				and customer.name like #{query.customer}
+			</if>
+			<if test="query.keyword!=null">
+				and (emp.username like #{query.keyword} or emp.truename like #{query.keyword} or deposit.sn like #{query.keyword} or customer.name like #{query.keyword})
+			</if>
+			<if test="query.groupBy!=null and query.groupBy!=''">
+				${query.groupBy} = #{resultValue}
+			</if>
+		</where>
+	</select>
+</mapper>

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ssm.crm520.mapper.ContractMapper">
+	
+	<select id="createTable">
+		create table if not exists t_contract(
+			id bigint primary key auto_increment,
+			sn varchar(20),
+			sginDate date,
+			contractAmount decimal,
+			intro varchar(100),
+			saler_id bigint,
+			customer_id bigint
+		)
+		
+	</select>
+	
+	<insert id="save" parameterType="Contract"  useGeneratedKeys="true">
+		insert into t_contract(sn,sginDate,contractAmount,intro,saler_id,customer_id) 
+		values(#{sn},#{sginDate},#{contractAmount},#{intro},#{saler.id},#{customer.id})
+	</insert>
+	
+	<delete id="delete" parameterType="long">
+		delete from t_contract where id = #{id}
+	</delete>
+	
+	<update id="update" parameterType="Contract">
+		update t_contract set sn=#{sn},sginDate=#{sginDate},contractAmount=#{contractAmount},intro=#{intro},saler_id=#{saler.id},customer_id=#{customer.id} where id =#{id}
+	</update>
+	
+	
+	<sql id="replaceSql">
+		select contract.*,emp.id eid,emp.username euname,emp.truename etname,emp.password epwd,emp.tel etel,emp.email empemail,emp.inTime etime,emp.status estatus,customer.id cid,customer.name cname,
+		customer.age cage,customer.gender cgender,customer.tel ctel,customer.email cemail,customer.qq cqq,customer.weChat cweChat,customer.time ctime,
+		item.id pid,item.payDate pdate,item.payAmount pamount,item.payProcent pprocent,item.status pstatus                   
+		from t_contract contract left join t_employee emp on contract.saler_id=emp.id left join t_customer customer on contract.customer_id=customer.id left join t_contractPayItem item on contract.id = item.contract_id
+	</sql>
+	
+	<resultMap type="Contract" id="contractMap">
+		<id property="id" column="id"/>
+		<result property="sn" column="sn"/>
+		<result property="sginDate" column="sginDate"/>
+		<result property="contractAmount" column="contractAmount"/>
+		<result property="intro" column="intro"/>
+		<association property="saler" column="saler_id" javaType="Employee">
+			<id property="id" column="eid"/>
+			<result property="username" column="euname"/>
+			<result property="truename" column="etname"/>
+			<result property="password" column="epwd"/>
+			<result property="tel" column="etel"/>
+			<result property="email" column="empemail"/>
+			<result property="inTime" column="etime"/>
+			<result property="status" column="estatus"/>
+		</association>
+		<association property="customer" column="customer_id" javaType="Customer">
+			<id property="id" column="cid"/>
+			<result property="name" column="cname"/>
+			<result property="age" column="cage"/>
+			<result property="gender" column="cgender"/>
+			<result property="tel" column="ctel"/>
+			<result property="email" column="cemail"/>
+			<result property="qq" column="cqq"/>
+			<result property="weChat" column="cweChat"/>
+			<result property="time" column="ctime"/>
+		</association>
+		<collection property="items" column="id" javaType="arraylist" ofType="ContractPayItem">
+			<id property="id" column="pid"/>
+			<result property="payDate" column="pdate" />
+			<result property="payAmount" column="pamount" />
+			<result property="payProcent" column="pprocent" />
+			<result property="status" column="pstatus" />
+		</collection>
+		
+	</resultMap>
+	
+	<select id="get" parameterType="long" resultMap="contractMap">
+		<include refid="replaceSql"/> where contract.id = #{id}
+	</select>
+	
+	<select id="getAll" resultMap="contractMap">
+		<include refid="replaceSql"/>
+	</select>
+	
+	<sql id="queryCondition">
+		<where>
+			<if test="sn!=null and sn!=''">
+				contract.sn like #{sn}
+			</if>
+			<if test="minDate!=null">
+				and contract.sginDate >= #{minDate}
+			</if>
+			<if test="maxDate!=null">
+				and contract.sginDate &lt;= #{maxDate}
+			</if>
+			<if test="saler!=null and saler!=''">
+				and (emp.username like #{saler} or emp.truename like #{saler})
+			</if>
+			<if test="customer!=null and customer!=''">
+				and customer.name like #{customer}
+			</if>
+			<if test="keyword!=null">
+				and (emp.username like #{keyword} or emp.truename like #{keyword} or contract.sn like #{keyword} or customer.name like #{keyword})
+			</if>
+		</where>
+	</sql>
+	
+	<select id="findQuery" parameterType="ContractQuery" resultMap="contractMap">
+		<include refid="replaceSql"/> <include refid="queryCondition"/> limit #{start},#{rows}
+	</select>
+	
+	<select id="findCount" resultType="long" parameterType="ContractQuery">
+		select count(contract.id)
+		from t_contract contract left join t_employee emp on contract.saler_id=emp.id 
+		left join t_customer customer on contract.customer_id=customer.id left join t_contractPayItem item
+		on contract.id = item.contract_id <include refid="queryCondition"/>
+	</select>
+</mapper>

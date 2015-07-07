@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ssm.crm520.mapper.EmployeeMapper">
+	<!-- 建表 -->
+	<update id="createTable">
+		CREATE TABLE IF NOT EXISTS `t_employee` (
+		`id` bigint(20) NOT NULL
+		AUTO_INCREMENT,
+		`username` varchar(30) DEFAULT NULL,
+		`truename`
+		varchar(30) DEFAULT NULL,
+		`password` varchar(32) DEFAULT NULL,
+		`tel`
+		varchar(32) DEFAULT NULL,
+		`email` varchar(32) DEFAULT NULL,
+		`department_id` bigint(20) DEFAULT NULL,
+		`inTime` date DEFAULT NULL,
+		`status` varchar(30) DEFAULT NULL,
+		`role_id` bigint(20) DEFAULT NULL,
+		PRIMARY KEY (`id`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+	</update>
+	<!-- 增加 -->
+	<insert id="save" parameterType="Employee" keyProperty="id" useGeneratedKeys="true">
+		insert into t_employee
+		(username,truename,password,tel,email,inTime,status,department_id)
+		values(#{username},#{truename},#{password},#{tel},#{email},#{inTime},#{status},#{department.id})
+	</insert>
+	<!-- 删除 -->
+	<delete id="delete" parameterType="long">
+		delete from t_employee
+		where
+		id=#{id}
+	</delete>
+	<!-- 修改 -->
+	<update id="update" parameterType="Employee">
+		update t_employee set
+		username=#{username},truename=#{truename},password=#{password},tel=#{tel},email=#{email},
+		inTime=#{inTime},status=#{status},department_id=#{department.id}
+		where id=#{id}
+	</update>
+	
+	<sql id="commonSql">
+		from t_employee e
+		left join t_employee_role er
+		on e.id = er.employee_id
+		left join t_role r
+		on er.role_id = r.id 
+	</sql>
+	
+	<select id="getDepartment" resultType="Department"
+		parameterType="long">
+		select * from t_department where id=#{id}
+	</select>
+	
+	<select id="getRole" parameterType="long" resultType="Role">
+		select r.*
+		from t_employee_role er left join t_role r
+		on er.role_id = r.id
+		where er.employee_id = #{id}
+	</select>
+	
+	<resultMap type="Employee" id="employeeMapper">
+		<id property="id" column="id"/>
+		<association select="getDepartment" property="department" column="department_id" javaType="Department">
+		</association>
+		<collection property="roles" column="id" javaType="arraylist" ofType="Role" select="getRole" ></collection>
+	</resultMap>
+	
+	
+	<!-- 查询单个 -->
+	<select id="get" parameterType="long" resultMap="employeeMapper">
+		select * from t_employee where id=#{id} 
+	</select>
+	
+	<!-- 查询所有 -->
+	<select id="getAll" resultMap="employeeMapper">
+		select distinct e.* <include refid="commonSql"/>
+	</select>
+	
+	
+	<select id="findQuery" resultMap="employeeMapper">
+		select * from t_employee
+		<include refid="commonQuerySql" />
+		<if test="sort!=null and order !=null">
+			order by ${sort} ${order}
+		</if>
+		limit #{start},#{rows}
+	</select>
+	
+	<select id="findCount" resultType="long">
+		select count(*) from t_employee
+		<include refid="commonQuerySql" />
+	</select>
+	<sql id="commonQuerySql">
+		<where>
+			<if test="keyword!=null">
+				and (username like #{keyword} or truename like #{keyword})
+			</if>
+			<if test="username!=null">
+				and username like #{username}
+			</if>
+			<if test="truename!=null">
+				and truename like #{truename}
+			</if>
+			<if test="password!=null">
+				and password like #{password}
+			</if>
+			<if test="tel!=null">
+				and tel like #{tel}
+			</if>
+			<if test="email!=null">
+				and email like #{email}
+			</if>
+			<if test="department_id!=null">
+				and department_id like #{department_id}
+			</if>
+			<if test="minTime!=null">
+				and inTime >= #{minTime}
+			</if>
+			<if test="maxTime!=null">
+				and inTime &lt; #{maxTime}
+			</if>
+			<if test="status!=null">
+				and status like #{status}
+			</if>
+		</where>
+	</sql>
+	<!-- findQuery(IBaseQuery query); -->
+	<!-- Long findCount(IBaseQuery query); -->
+	<select id="checkLogin" resultType="Employee" parameterType="map">
+		select * from t_employee where username = #{username} and password=#{password}
+	</select>
+	
+	<!-- 员工与角色中间表 -->
+	<insert id="saveEmployeeRoleRelation" parameterType="arraylist">
+		insert into t_employee_role(employee_id,role_id) values 
+		<foreach collection="list" item="item" separator=",">
+			(#{item.employee_id},#{item.role_id})			
+		</foreach>
+	</insert>
+	
+	<!-- 当更新员工角色时,需要先清除中间表关系 -->
+	<delete id="clearEmployeeRoleRelation" parameterType="long">
+		delete from t_employee_role where employee_id = #{id}
+	</delete>
+	
+	<select id="getManager" parameterType="long" resultMap="employeeMapper">
+		select m.*  
+		from t_employee e 
+		left join t_department d
+		on e.department_id = d.id
+		left join t_employee m
+		on d.manager_id = m.id
+		where e.id  = #{id}
+	</select>
+</mapper>

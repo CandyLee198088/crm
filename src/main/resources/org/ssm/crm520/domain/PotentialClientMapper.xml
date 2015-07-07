@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.PotentialClientMapper">
+	<resultMap type="PotentialClient" id="PotentialClientMapper">
+		<association property="source" column="source_id" javaType="SystemDictionaryDetail" select="getSystemDictionaryDetail" />
+		<association property="createStaff" javaType="Employee" column="createStaff_id" select="getEmployee" />
+	</resultMap>
+	<select id="getSystemDictionaryDetail" parameterType="long" resultType="SystemDictionaryDetail">
+		select * from t_systemdictionarydetail
+		where id=#{id}
+	</select>
+	<select id="getEmployee" parameterType="long" resultType="Employee">
+		select * from t_employee where id =#{id}
+	</select>
+	<update id="createTable">
+		CREATE TABLE IF NOT EXISTS `t_potentialclient` (
+		`id` bigint(20) NOT NULL AUTO_INCREMENT,
+		`sn`
+		varchar(40) DEFAULT NULL,
+		`source_id` bigint(20) DEFAULT NULL,
+		`name` varchar(20) DEFAULT NULL,
+		`successChance` int(11)
+		DEFAULT NULL,
+		`description` varchar(255) DEFAULT NULL,
+		`tel` varchar(255) DEFAULT NULL,
+		`createStaff_id` bigint(20)
+		DEFAULT NULL,
+		`createTime` datetime DEFAULT NULL,
+		PRIMARY KEY (`id`),
+		KEY `source_id` (`source_id`),
+		KEY `createStaff_id`
+		(`createStaff_id`),
+		CONSTRAINT `t_potentialclient_ibfk_2` FOREIGN KEY (`createStaff_id`) REFERENCES `t_employee`
+		(`id`),
+		CONSTRAINT `t_potentialclient_ibfk_1` FOREIGN KEY (`source_id`) REFERENCES `t_systemdictionarydetail` (`id`)
+		)
+		ENGINE=InnoDB DEFAULT CHARSET=utf8;
+	</update>
+	<insert id="save" useGeneratedKeys="true" parameterType="PotentialClient">
+		insert into t_potentialClient
+		(sn,source_id,name,successChance,description,tel,createStaff_id,createTime)
+		VALUES
+		(#{sn},#{source.id},#{name},#{successChance},#{description},#{tel},#{createStaff.id},#{createTime})
+	</insert>
+	<update id="update" parameterType="PotentialClient">
+		update t_potentialClient set
+		sn =
+		#{sn},source_id=#{source.id},name=#{name},successChance=#{successChance},description=#{description},tel=#{tel}
+		where id =
+		#{id}
+	</update>
+	<delete id="delete">
+		delete from t_potentialClient where id = #{id}
+	</delete>
+	<sql id="selectCommonSql">
+		from t_potentialClient pc
+		left join t_systemdictionarydetail sd
+		on pc.source_id =sd.id
+		left join t_employee e
+		on pc.createStaff_id = e.id
+	</sql>
+	<select id="get" resultMap="PotentialClientMapper" parameterType="long">
+		select pc.*
+		<include refid="selectCommonSql" />
+		where pc.id =#{id}
+	</select>
+
+	<select id="getAll" resultMap="PotentialClientMapper">
+		select pc.*
+		<include refid="selectCommonSql" />
+	</select>
+
+	<select id="findQuery" parameterType="PotentialClientQuery" resultMap="PotentialClientMapper">
+		select pc.*
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+		<if test="sort!=null and order!=null">
+			order by
+			<choose>
+				<when test="sort=='source' or sort=='createStaff' ">
+					pc.${sort}_id
+				</when>
+				<otherwise>
+					pc.${sort}
+				</otherwise>
+			</choose>
+			${order}
+		</if>
+		<if test="start!=null and rows!=null">
+			limit #{start},#{rows}
+		</if>
+	</select>
+	<select id="findCount" parameterType="PotentialClientQuery" resultType="long">
+		select count(pc.id)
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+	</select>
+
+	<sql id="commonQuerySql">
+		<where>
+			<if test="keyword != null">
+			</if>
+			<if test="sn != null">
+				and sn like #{sn}
+			</if>
+			<if test="name != null">
+				and name like #{name}
+			</if>
+			<if test="tel != null">
+				and tel like #{tel}
+			</if>
+			<if test="sourceId != null">
+				and source_id = #{sourceId}
+			</if>
+			<if test="minSuccessChance != null">
+				and successChance >= #{minSuccessChance}
+			</if>
+			<if test="maxSuccessChance != null">
+				and successChance &lt;= #{maxSuccessChance}
+			</if>
+			<if test="createStaffId != null">
+				and createStaffId = #{createStaffId}
+			</if>
+			<if test="minCreateTime != null">
+				and createTime >= #{minCreateTime}
+			</if>
+			<if test="maxCreateTime != null">
+				and createTime &lt;= #{maxCreateTime}
+			</if>
+		</where>
+	</sql>
+
+</mapper>

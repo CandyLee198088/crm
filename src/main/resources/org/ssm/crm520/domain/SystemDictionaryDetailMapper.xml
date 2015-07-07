@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ssm.crm520.mapper.SystemDictionaryDetailMapper">
+	
+	<select id="createTable">
+		create table if not exists t_systemDictionaryDetail(
+			id bigint primary key auto_increment,
+			name varchar(20),
+			sn int,
+			intro varchar(100),
+			type_id bigint
+		)
+	</select>
+	
+	<insert id="save" parameterType="SystemDictionaryDetail"  useGeneratedKeys="true">
+		insert into t_systemDictionaryDetail(name,sn,intro,type_id) values(#{name},#{sn},#{intro},#{types.id})
+	</insert>
+	
+	<delete id="delete" parameterType="long">
+		delete from t_systemDictionaryDetail where id = #{id}
+	</delete>
+	
+	<update id="update" parameterType="SystemDictionaryDetail">
+		update t_systemDictionaryDetail set name=#{name},sn=#{sn},intro=#{intro},type_id=#{types.id} where id = #{id}
+	</update>
+	
+	<resultMap type="SystemDictionaryDetail" id="systemDictionaryDetailMap">
+		<id property="id" column="id" />
+		<result property="name" column="name"/>
+		<result property="sn" column="sn"/>
+		<result property="intro" column="intro"/>
+		<association property="types" column="type_id" javaType="SystemDictionaryType">
+			<id property="id" column="tid"/>
+			<result property="sn" column="tsn"/>
+			<result property="name" column="tname"/>
+			<result property="intro" column="tintro"/>
+			<result property="status" column="tstatus"/>
+		</association>
+	</resultMap>
+	
+	<sql id="replaceSql">
+		select detail.*,type.id tid,type.name tname,type.sn tsn,type.intro tintro,type.status tstatus
+		from t_systemDictionaryDetail detail left join t_systemDictionaryType type on(detail.type_id=type.id)
+	</sql>
+	
+	<select id="get" parameterType="long" resultMap="systemDictionaryDetailMap">
+		<include refid="replaceSql"/> where detail.id = #{id}
+	</select>
+	
+	<select id="getAll" resultMap="systemDictionaryDetailMap">
+		<include refid="replaceSql"/>
+	</select>
+	
+	<select id="findQuery" parameterType="SystemDictionaryDetailQuery" resultMap="systemDictionaryDetailMap">
+		<include refid="replaceSql"/> 
+		<where>
+			<if test="name!=null">
+				detail.name like #{name}
+			</if>
+			<if test="sn!=null">
+				and detail.sn = #{sn}
+			</if>
+			<if test="keyword!=null">
+				and detail.name like #{keyword}
+			</if>
+			<if test="id!=null">
+				and type.id = #{id}
+			</if>
+		</where>
+		<if test="sort!=null and order !=null">
+			order by type.${sort} ${order}
+		</if>
+		limit #{start},#{rows}
+	</select>
+	
+	<select id="findCount" resultType="long" parameterType="SystemDictionaryDetailQuery">
+			select count(*)
+			from t_systemDictionaryDetail detail left join t_systemDictionaryType type on(detail.type_id=type.id)
+			<where>
+			<if test="name!=null">
+				detail.name like #{name}
+			</if>
+			<if test="sn!=null">
+				and detail.sn = #{sn}
+			</if>
+			<if test="keyword!=null">
+				and detail.name like #{keyword} 
+			</if>
+			<if test="id!=null">
+				and type.id = #{id}
+			</if>
+		</where>
+	</select>
+</mapper>

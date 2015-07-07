@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 41
+/svn/CRM/!svn/ver/127/CRMProject/template
+END
+Controller.java
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/CRM/!svn/ver/127/CRMProject/template/Controller.java
+END
+Query.java
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/CRM/!svn/ver/127/CRMProject/template/Query.java
+END
+ServiceTest.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/CRM/!svn/ver/127/CRMProject/template/ServiceTest.java
+END
+Mapper.xml
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/CRM/!svn/ver/127/CRMProject/template/Mapper.xml
+END
+Service.java
+K 25
+svn:wc:ra_dav:version-url
+V 54
+/svn/CRM/!svn/ver/127/CRMProject/template/Service.java
+END
+ServiceImpl.java
+K 25
+svn:wc:ra_dav:version-url
+V 58
+/svn/CRM/!svn/ver/127/CRMProject/template/ServiceImpl.java
+END
+Domain.java
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/CRM/!svn/ver/127/CRMProject/template/Domain.java
+END
+Mapper.java
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svn/CRM/!svn/ver/127/CRMProject/template/Mapper.java
+END

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.${domain}Mapper">
+	<resultMap type="${domain}" id="${domain}Mapper">
+
+	</resultMap>
+	<update id="createTable">
+	</update>
+	<insert id="save" useGeneratedKeys="true" parameterType="${domain}">
+		insert into t_${domainLower}
+		()
+		VALUES
+		()
+	</insert>
+	<update id="update" parameterType="${domain}">
+		update t_${domainLower} set
+
+		where id = #{id}
+	</update>
+	<delete id="delete">
+		delete from t_${domainLower} where id = #{id}
+	</delete>
+	<sql id="selectCommonSql">
+		from t_${domainLower}
+	</sql>
+	<select id="get" resultMap="${domain}Mapper" parameterType="long">
+		select
+		<include refid="selectCommonSql" />
+		where
+	</select>
+
+	<select id="getAll"  resultMap="${domain}Mapper">
+		select c.*
+		<include refid="selectCommonSql" />
+	</select>
+
+	<select id="findQuery" parameterType="${domain}Query"  resultMap="${domain}Mapper">
+		select c.*
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+		<if test="sort!=null and order!=null">
+			order by
+			<choose>
+				<when test="sort=='' ">
+					c.${sort}_id
+				</when>
+				<otherwise>
+					c.${sort}
+				</otherwise>
+			</choose>
+			${order}
+		</if>
+		<if test="start!=null and rows!=null">
+			limit #{start},#{rows}
+		</if>
+	</select>
+	<select id="findCount" parameterType="${domain}Query" resultType="long">
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+	</select>
+
+	<sql id="commonQuerySql">
+		<where>
+			<if test="keyword != null">
+			</if>
+		</where>
+	</sql>
+
+</mapper>

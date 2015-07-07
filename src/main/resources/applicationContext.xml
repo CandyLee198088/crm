@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:jee="http://www.springframework.org/schema/jee"
+	xmlns:tx="http://www.springframework.org/schema/tx" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+			http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+			http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+			http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+			http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+			
+	<context:property-placeholder location="classpath:db.properties" />
+	<!-- dataSource配置 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="initialSize" value="${jdbc.initialSize}" />
+	</bean>
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="typeAliasesPackage" value="org.ssm.crm520.domain,org.ssm.crm520.page"></property>
+		<property name="mapperLocations" value="classpath:org/ssm/crm520/domain/*Mapper.xml"></property>
+	</bean>
+	<!-- 事务配置 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	<aop:config>
+		<aop:pointcut id="crmPointCut" expression="execution(* org.ssm.crm520.service..*.*(..))" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="crmPointCut" />
+	</aop:config>
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="find*" propagation="SUPPORTS" read-only="true" />
+			<tx:method name="get*" propagation="SUPPORTS" read-only="true" />
+			<tx:method name="list*" propagation="SUPPORTS" read-only="true" />
+			<tx:method name="*" propagation="REQUIRED" />
+		</tx:attributes>
+	</tx:advice>
+	<import resource="classpath:manager/applicationContext-*.xml" />
+	<import resource="classpath:activiti-context.xml" />
+	
+	<aop:config>
+		<aop:pointcut id="logPointCut" expression="execution(* org.ssm.crm520.service..*.*(..))" />
+		<aop:aspect ref="systemLogUtil">
+			<aop:after method="addLog" pointcut-ref="logPointCut"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<!-- 用户工具 -->
+	<bean id="userContext" class="org.ssm.crm520.util.UserContext">
+		<property name="functionService" ref="functionServiceImpl"/>
+	</bean>
+	
+</beans>

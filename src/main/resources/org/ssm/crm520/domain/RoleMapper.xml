@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.RoleMapper">
+	<resultMap type="Role" id="RoleMapper">
+		<id column="id" property="id"/>
+		<collection property="functions" javaType="ArrayList" ofType="Function" column="id" select="getFunction"/>
+		<collection property="menus" javaType="ArrayList" ofType="Menu" column="id" select="getMenu"/>
+	</resultMap>
+	<select id="getFunction" parameterType="long" resultType="Function">
+		select * from t_function f 
+		left join t_role_function rf 
+		on f.id = rf.function_id
+		where rf.role_id =#{id} 
+	</select>
+	<select id="getMenu" parameterType="long" resultType="Menu">
+		select * from t_menu m 
+		left join t_role_menu rm 
+		on m.id = rm.menu_id
+		where rm.role_id =#{id} 
+	</select>
+	<update id="createTable">
+		CREATE TABLE IF NOT EXISTS `t_role` (
+		  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+		  `sn` varchar(20) DEFAULT NULL,
+		  `name` varchar(100) DEFAULT NULL,
+		  PRIMARY KEY (`id`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+		
+	</update>
+	<insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="Role">
+		insert into t_role
+		(sn,name)
+		VALUES
+		(#{sn},#{name})
+	</insert>
+	<update id="update" parameterType="Role">
+		update t_role set sn=#{sn},name=#{name} 
+		where id = #{id}
+	</update>
+	<delete id="delete" parameterType="long">
+		delete from t_role where id = #{id}
+	</delete>
+	
+	<select id="get" resultMap="RoleMapper" parameterType="long">
+		select * from t_role where id = #{id}
+	</select>
+
+	<select id="getAll"  resultMap="RoleMapper">
+		select r.* 
+		<include refid="commonSelect"/>
+	</select>
+	<sql id="commonSelect">
+		from t_role r
+	</sql>
+	
+	<select id="findQuery" parameterType="RoleQuery"  resultMap="RoleMapper">
+		select r.* 
+		<include refid="commonSelect"/>
+		<where>
+			<if test="sn!=null">
+				sn like #{sn}	
+			</if>
+			<if test="name!=null">
+				and name like #{name}	
+			</if>
+		</where>
+		limit #{start},#{rows}
+	</select>
+	<select id="findCount" parameterType="RoleQuery" resultType="long">
+		select count(*) from t_role 
+		<where>
+			<if test="sn!=null">
+				sn like #{sn}	
+			</if>
+			<if test="name!=null">
+				and name like #{name}	
+			</if>
+		</where>
+	</select>
+	
+	<!-- 中间表保存 -->
+	<insert id="saveRoleFunctionRelation" parameterType="arraylist" >
+		insert into t_role_function (role_id,function_id) values
+		<foreach collection="list" item="item" separator=",">
+			 (#{item.role_id},#{item.function_id})
+		</foreach>
+	</insert>
+	<!-- 中间表保存 -->
+	<insert id="saveRoleMenuRelation" parameterType="arraylist" >
+		insert into t_role_menu (role_id,menu_id) values
+		<foreach collection="list" item="item" separator=",">
+			 (#{item.role_id},#{item.menu_id})
+		</foreach>
+	</insert>
+	
+	<!-- 清除指定角色的中间表关联 -->
+	<delete id="clearRoleFunctionRelation" parameterType="long">
+		delete from t_role_function where role_id = #{id}
+	</delete>
+	<!-- 清除指定角色的中间表关联 -->
+	<delete id="clearRoleMenuRelation" parameterType="long">
+		delete from t_role_menu where role_id = #{id}
+	</delete>
+</mapper>

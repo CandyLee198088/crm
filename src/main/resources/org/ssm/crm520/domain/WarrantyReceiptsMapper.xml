@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.WarrantyReceiptsMapper">
+	<resultMap type="WarrantyReceipts" id="WarrantyReceiptsMapper">
+		<association property="customer" javaType="Customer" column="cid" select="getCustomer" />
+		<association property="contract" column="contract_id" javaType="Contract" select="getContract" />
+	</resultMap>
+<!-- 	 <resultMap type="Contract" id="ContractMapper"> -->
+<!-- 	 	<association property="customer" column="customer_id" javaType="Customer" select="getCustomer"/> -->
+<!-- 	 </resultMap> -->
+	<select id="getContract" parameterType="long" resultType="Contract">
+		select * from t_contract where id = #{id}
+	</select>
+	<select id="getCustomer" parameterType="long" resultType="Customer">
+		select * from t_customer where id = #{id}
+	</select>
+	<update id="createTable">
+		CREATE TABLE `t_warrantyreceipts` (
+		`id` bigint(20) NOT NULL AUTO_INCREMENT,
+		`sn` varchar(40) DEFAULT
+		NULL,
+		`contract_id` bigint(20) DEFAULT NULL,
+		`createTime` datetime DEFAULT NULL,
+		`expireTime` datetime DEFAULT NULL,
+		PRIMARY KEY (`id`),
+		KEY `contract_id` (`contract_id`),
+		CONSTRAINT `t_warrantyrecipts_ibfk_2` FOREIGN KEY (`contract_id`)
+		REFERENCES `t_contract` (`id`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+	</update>
+	<insert id="save" useGeneratedKeys="true" parameterType="WarrantyReceipts">
+		insert into t_warrantyReceipts
+		(sn,contract_id,createTime,expireTime)
+		VALUES
+		(#{sn},#{contract.id},#{createTime},#{expireTime})
+	</insert>
+	<update id="update" parameterType="WarrantyReceipts">
+		update t_warrantyReceipts set
+		sn =
+		#{sn},contract_id=#{contract.id},createTime=#{createTime},expireTime=#{expireTime}
+		where id = #{id}
+	</update>
+	<delete id="delete">
+		delete from t_warrantyReceipts where id = #{id}
+	</delete>
+	<sql id="selectCommonSql">
+		from t_warrantyReceipts wr
+		left join t_contract ct
+		on wr.contract_id = ct.id
+		left join t_customer c 
+		on c.id = ct.customer_id 
+	</sql>
+	<select id="get" resultMap="WarrantyReceiptsMapper" parameterType="long">
+		select wr.*,c.id cid
+		<include refid="selectCommonSql" />
+		where wr.id = #{id}
+	</select>
+
+	<select id="getAll" resultMap="WarrantyReceiptsMapper">
+		select wr.*,c.id cid
+		<include refid="selectCommonSql" />
+	</select>
+
+	<select id="findQuery" parameterType="WarrantyReceiptsQuery" resultMap="WarrantyReceiptsMapper">
+		select wr.*,c.id cid
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+		<if test="sort!=null and order!=null">
+			order by
+			<choose>
+				<when test="sort=='contract' ">
+					wr.${sort}_id
+				</when>
+				<otherwise>
+					c.${sort}
+				</otherwise>
+			</choose>
+			${order}
+		</if>
+		<if test="start!=null and rows!=null">
+			limit #{start},#{rows}
+		</if>
+	</select>
+	<select id="findCount" parameterType="WarrantyReceiptsQuery" resultType="long">
+		select count(wr.id)
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+	</select>
+
+	<sql id="commonQuerySql">
+		<where>
+			<if test="keyword != null">
+			</if>
+			<if test="sn != null">
+				and sn like #{sn}
+			</if>
+			<if test="contractId != null">
+				and contract_id like #{contractId}
+			</if>
+			<if test="minCreateTime != null">
+				and createTime like #{minCreateTime}
+			</if>
+			<if test="maxCreateTime != null">
+				and createTime like #{maxCreateTime}
+			</if>
+			<if test="minExpireTime != null">
+				and expireTime like #{minExpireTime}
+			</if>
+			<if test="maxExpireTime != null">
+				and expireTime like #{maxExpireTime}
+			</if>
+		</where>
+	</sql>
+
+</mapper>

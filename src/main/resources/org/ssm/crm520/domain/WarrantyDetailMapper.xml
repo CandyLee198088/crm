@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.WarrantyDetailMapper">
+	<resultMap type="WarrantyDetail" id="WarrantyDetailMapper">
+		<association property="receipt" column="receipt_id" javaType="WarrantyReceipts" select="getWarrantyReceipts" />
+	</resultMap>
+	<select id="getWarrantyReceipts" parameterType="long" resultType="WarrantyReceipts">
+		select * from t_warrantyReceipts where id =
+		#{id}
+	</select>
+	<update id="createTable">
+		CREATE TABLE if not exists `t_warrantydetail` (
+		`id` bigint(20) NOT NULL AUTO_INCREMENT,
+		`repairTime`
+		datetime DEFAULT NULL,
+		`summary` varchar(255) DEFAULT NULL,
+		`status` int(11) DEFAULT NULL,
+		`receipt_id` bigint(20)
+		DEFAULT NULL,
+		PRIMARY KEY (`id`),
+		KEY `receipt_id` (`receipt_id`),
+		CONSTRAINT `t_warrantydetail_ibfk_1` FOREIGN KEY
+		(`receipt_id`) REFERENCES `t_warrantyreceipts` (`id`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+	</update>
+	<insert id="save" useGeneratedKeys="true" parameterType="WarrantyDetail">
+		insert into t_warrantyDetail
+		(repairTime,summary,status,receipt_id)
+		VALUES
+		(#{repairTime},#{summary},#{status},#{receipt.id})
+	</insert>
+	<update id="update" parameterType="WarrantyDetail">
+		update t_warrantyDetail set
+		repairTime =
+		#{repairTime},summary=#{summary},status=#{status},receipt_id=#{receipt.id}
+		where id = #{id}
+	</update>
+	<delete id="delete">
+		delete from t_warrantyDetail where id = #{id}
+	</delete>
+	<sql id="selectCommonSql">
+		from t_warrantyDetail wd
+		left join t_warrantyReceipts wr
+		on wd.receipt_id = wr.id
+	</sql>
+	<select id="get" resultMap="WarrantyDetailMapper" parameterType="long">
+		select wd.*
+		<include refid="selectCommonSql" />
+		where wd.id=#{id}
+	</select>
+
+	<select id="getAll" resultMap="WarrantyDetailMapper">
+		select wd.*
+		<include refid="selectCommonSql" />
+	</select>
+
+	<select id="findQuery" parameterType="WarrantyDetailQuery" resultMap="WarrantyDetailMapper">
+		select wd.*
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+		<if test="sort!=null and order!=null">
+			order by
+			<choose>
+				<when test="sort=='receipt' ">
+					wd.${sort}_id
+				</when>
+				<otherwise>
+					wd.${sort}
+				</otherwise>
+			</choose>
+			${order}
+		</if>
+		<if test="start!=null and rows!=null">
+			limit #{start},#{rows}
+		</if>
+	</select>
+	<select id="findCount" parameterType="WarrantyDetailQuery" resultType="long">
+		select count(wd.id)
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+	</select>
+
+	<sql id="commonQuerySql">
+		<where>
+			<if test="keyword != null">
+			</if>
+			<if test="summary != null">
+				and summary like #{summary}
+			</if>
+			<if test="minRepairTime != null">
+				and repairTime >= #{minRepairTime}
+			</if>
+			<if test="maxRepairTime != null">
+				and repairTime >= #{maxRepairTime}
+			</if>
+			<if test="status != null">
+				and status >= #{status}
+			</if>
+			<if test="receiptId != null">
+				and receipt_id >= #{receiptId}
+			</if>
+		</where>
+	</sql>
+	<select id="findByParent" parameterType="long"  resultMap="WarrantyDetailMapper">
+		select * from t_warrantyDetail where receipt_id = #{id}
+	</select>
+	<select id="findGroupByMonth" resultType="map" >
+		select count(id) number,concat(YEAR(wd.repairTime),'-',MONTH(wd.repairTime)) time
+		from t_warrantydetail wd 
+		GROUP BY MONTH(wd.repairTime),YEAR(wd.repairTime)
+	</select>
+</mapper>

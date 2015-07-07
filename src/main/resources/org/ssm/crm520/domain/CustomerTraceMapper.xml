@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.CustomerTraceMapper">
+<!-- ============================================= -->
+<!-- 高级查询和分页 -->
+<select id="findQuery" parameterType="CustomerTraceQuery" resultMap="getCustomerTrace">
+<include refid="getgetAll"/>
+	<where>
+		<if test="keyword!=null">
+			( 
+			 c.theme like #{keyword} 
+			or c.remark like #{keyword} 
+			
+			or c1.name   like #{keyword} 
+			or e.truename   like #{keyword} 
+			or s.name   like #{keyword} 
+			
+			<if test="keyword=='%好%'">
+				or c.traceResult=1 
+			</if>
+			<if test="keyword=='%中%'">
+				or c.traceResult=0 
+			</if>
+			<if test="keyword=='%差%'">
+				or c.traceResult=-1 
+			</if>
+		
+			)
+		</if>
+	</where>
+		<if test="start!=null and rows!=null">
+			 limit #{start},#{rows}
+		</if>
+</select>
+<select id="findCount" parameterType="CustomerTraceQuery" resultType="long">
+select count(c.id) 
+from t_customerTrace c left join t_customer c1 on c.customer_id=c1.id 
+left join t_employee e on c.traceUser_id=e.id 
+left join t_SystemDictionaryDetail s on c.traceType_id=s.id 
+ <where>
+		<if test="keyword!=null">
+			( 
+			 c.theme like #{keyword} 
+			or c.remark like #{keyword} 
+			
+			or c1.name   like #{keyword} 
+			or e.truename   like #{keyword} 
+			or s.name   like #{keyword} 
+			
+			<if test="keyword=='%好%'">
+				or c.traceResult=1 
+			</if>
+			<if test="keyword=='%中%'">
+				or c.traceResult=0 
+			</if>
+			<if test="keyword=='%差%'">
+				or c.traceResult=-1 
+			</if>
+		
+			)
+		</if>
+	</where>
+</select>
+<!-- ============================================= -->
+<sql id="getgetAll">
+select c.*,c1.id c1id,c1.name c1name,c1.age c1age,c1.gender c1gender,c1.tel c1tel,
+c1.email c1email,c1.qq c1qq,c1.weChat c1weChat,c1.time c1time,
+e.id eid,e.username eusername,e.truename etruename,e.password epassword,e.tel etel,
+e.email eemail,e.inTime einTime,e.status estatus,
+s.id sid,s.name sname,s.sn ssn,s.intro sintro 
+
+from t_customerTrace c left join t_customer c1 on c.customer_id=c1.id 
+left join t_employee e on c.traceUser_id=e.id 
+left join t_SystemDictionaryDetail s on c.traceType_id=s.id 
+</sql>
+<select id="get" parameterType="long" resultMap="getCustomerTrace">
+	 <include refid="getgetAll"/>
+	 where c.id=#{id}	 
+</select>
+<select id="getAll"  resultMap="getCustomerTrace">
+<include refid="getgetAll"/>
+</select>
+<resultMap type="CustomerTrace" id="getCustomerTrace">
+	<id property="id" column="id"/>
+	<result property="date" column="date"/>
+	<result property="traceResult" column="traceResult"/>
+	<result property="theme" column="theme"/>
+	<result property="remark" column="remark"/>
+	<association property="customer" column="customer_id" javaType="Customer">
+		<id property="id" column="c1id"/>
+		<result property="name" column="c1name"/>
+		<result property="age" column="c1age"/>
+		<result property="gender" column="c1gender"/>
+		<result property="tel" column="c1tel"/>
+		<result property="email" column="c1email"/>
+	
+		<result property="qq" column="c1qq"/>
+		<result property="weChat" column="c1weChat"/>
+		<result property="time" column="c1time"/>
+	</association>
+	<association property="traceUser" column="traceUser_id" javaType="Employee">
+		<id property="id" column="eid"/>
+		<result property="username" column="eusername"/>
+		<result property="truename" column="etruename"/>
+		<result property="password" column="epassword"/>
+		<result property="tel" column="etel"/>
+		<result property="email" column="eemail"/>
+	
+		<result property="inTime" column="einTime"/>
+		<result property="status" column="estatus"/>
+	</association>
+	<association property="traceType" column="traceType_id" javaType="SystemDictionaryDetail">
+		<id property="id" column="sid"/>
+		<result property="name" column="sname"/>
+		
+		<result property="sn" column="ssn"/>
+		<result property="intro" column="sintro"/>
+	</association>
+</resultMap>
+<!-- ============================================= -->
+<delete id="delete" parameterType="long">
+delete from t_customerTrace where id=#{id}
+</delete>
+<update id="update" parameterType="CustomerTrace">
+update t_customerTrace set customer_id=#{customer.id},traceUser_id=#{traceUser.id},
+date=#{date},traceType_id=#{traceType.id},traceResult=#{traceResult},theme=#{theme},
+remark=#{remark} where id=#{id}
+</update>
+<insert id="save" useGeneratedKeys="true" parameterType="CustomerTrace">
+insert into t_customerTrace  (customer_id,traceUser_id,date,traceType_id,traceResult,theme,remark) 
+values (#{customer.id},#{traceUser.id},#{date},#{traceType.id},#{traceResult},#{theme},#{remark})
+</insert>	
+<update id="createTable">
+	CREATE TABLE if not exists `t_customertrace` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint(20) DEFAULT NULL,
+  `traceUser_id` bigint(20) DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `traceType_id` bigint(20) DEFAULT NULL,
+  `traceResult` int(11) DEFAULT NULL,
+  `theme` varchar(255) DEFAULT NULL,
+  `remark` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `customer_id` (`customer_id`),
+  KEY `traceUser_id` (`traceUser_id`),
+  KEY `traceType_id` (`traceType_id`),
+  CONSTRAINT `t_customertrace_ibfk_3` FOREIGN KEY (`traceType_id`) REFERENCES `t_systemdictionarydetail` (`id`),
+  CONSTRAINT `t_customertrace_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `t_customer` (`id`),
+  CONSTRAINT `t_customertrace_ibfk_2` FOREIGN KEY (`traceUser_id`) REFERENCES `t_employee` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</update>
+</mapper>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.CustomerTransHistoryMapper">
+<!-- ============================================= -->
+<!-- 高级查询和分页 -->
+<select id="findQuery" parameterType="CustomerTransHistoryQuery" resultMap="getCustomerTransHistory">
+<include refid="getgetAll"/>
+	<where>
+		<if test="keyword!=null">
+			( 
+			 c.reason like #{keyword} 
+			or c1.name   like #{keyword} 
+			
+			or e1.truename   like #{keyword} 
+			or e2.truename   like #{keyword} 
+			or e3.truename   like #{keyword} 
+		
+			)
+		</if>
+	</where>
+		<if test="start!=null and rows!=null">
+			 limit #{start},#{rows}
+		</if>
+</select>
+<select id="findCount" parameterType="CustomerTransHistoryQuery" resultType="long">
+select count(c.id) 
+from t_customerTransHistory c left join t_customer c1 on c.customer_id=c1.id 
+left join t_employee e1 on c.transUser_id=e1.id 
+left join t_employee e2 on c.oldSeller_id=e2.id 
+left join t_employee e3 on c.newSeller_id=e3.id 
+ <where>
+		<if test="keyword!=null">
+			( 
+			 c.reason like #{keyword} 
+			or c1.name   like #{keyword} 
+			
+			or e1.truename   like #{keyword} 
+			or e2.truename   like #{keyword} 
+			or e3.truename   like #{keyword} 
+			)
+		</if>
+</where>
+</select>
+<!-- ============================================= -->
+<sql id="getgetAll">
+select c.*,c1.id c1id,c1.name c1name,c1.age c1age,c1.gender c1gender,c1.tel c1tel,
+c1.email c1email,c1.qq c1qq,c1.weChat c1weChat,c1.time c1time,
+e1.id e1id,e1.username e1username,e1.truename e1truename,e1.password e1password,e1.tel e1tel,
+e1.email e1email,e1.inTime e1inTime,e1.status e1status,
+e2.id e2id,e2.username e2username,e2.truename e2truename,e2.password e2password,e2.tel e2tel,
+e2.email e2email,e2.inTime e2inTime,e2.status e2status,
+e3.id e3id,e3.username e3username,e3.truename e3truename,e3.password e3password,e3.tel e3tel,
+e3.email e3email,e3.inTime e3inTime,e3.status e3status
+
+from t_customerTransHistory c left join t_customer c1 on c.customer_id=c1.id 
+left join t_employee e1 on c.transUser_id=e1.id 
+left join t_employee e2 on c.oldSeller_id=e2.id 
+left join t_employee e3 on c.newSeller_id=e3.id 
+
+</sql>
+<select id="get" parameterType="long" resultMap="getCustomerTransHistory">
+	 <include refid="getgetAll"/>
+	 where c.id=#{id}	 
+</select>
+<select id="getAll"  resultMap="getCustomerTransHistory">
+<include refid="getgetAll"/>
+</select>
+<resultMap type="CustomerTransHistory" id="getCustomerTransHistory">
+	<id property="id" column="id"/>
+	<result property="transTime" column="transTime"/>
+	<result property="reason" column="reason"/>
+	<association property="customer" column="customer_id" javaType="Customer">
+		<id property="id" column="c1id"/>
+		<result property="name" column="c1name"/>
+		<result property="age" column="c1age"/>
+		<result property="gender" column="c1gender"/>
+		<result property="tel" column="c1tel"/>
+		<result property="email" column="c1email"/>
+	
+		<result property="qq" column="c1qq"/>
+		<result property="weChat" column="c1weChat"/>
+		<result property="time" column="c1time"/>
+	</association>
+	
+	<association property="transUser" column="transUser_id" javaType="Employee">
+			<id property="id" column="e1id"/>
+			<result property="username" column="e1username"/>
+			<result property="truename" column="e1truename"/>
+			<result property="password" column="e1password"/>
+			<result property="tel" column="e1tel"/>
+			<result property="email" column="e1email"/>
+			<result property="inTime" column="e1inTime"/>
+			<result property="status" column="e1estatus"/>
+	</association>
+	<association property="oldSeller" column="oldSeller_id" javaType="Employee">
+			<id property="id" column="e2id"/>
+			<result property="username" column="e2username"/>
+			<result property="truename" column="e2truename"/>
+			<result property="password" column="e2password"/>
+			<result property="tel" column="e2tel"/>
+			<result property="email" column="e2email"/>
+			<result property="inTime" column="e2inTime"/>
+			<result property="status" column="e2estatus"/>
+	</association>
+	<association property="newSeller" column="newSeller_id" javaType="Employee">
+			<id property="id" column="e3id"/>
+			<result property="username" column="e3username"/>
+			<result property="truename" column="e3truename"/>
+			<result property="password" column="e3password"/>
+			<result property="tel" column="e3tel"/>
+			<result property="email" column="e3email"/>
+			<result property="inTime" column="e3inTime"/>
+			<result property="status" column="e3estatus"/>
+	</association>
+</resultMap>
+<!-- ============================================= -->
+<delete id="delete" parameterType="long">
+delete from t_customerTransHistory where id=#{id}
+</delete>
+<update id="update" parameterType="CustomerTransHistory">
+update t_customertransHistory set customer_id=#{customer.id},transUser_id=#{transUser.id},
+transTime=#{transTime},oldSeller_id=#{oldSeller.id},newSeller_id=#{newSeller.id},
+reason=#{reason}   where id=#{id}
+</update>
+<insert id="save" useGeneratedKeys="true" parameterType="CustomerTransHistory">
+insert into t_customerTransHistory  (customer_id,transUser_id,transTime,oldSeller_id,
+newSeller_id,reason )  values (#{customer.id},#{transUser.id},#{transTime},
+#{oldSeller.id},#{newSeller.id},#{reason})
+</insert>	
+<update id="createTable">
+	CREATE TABLE if not exists `t_customertranshistory` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint(20) DEFAULT NULL,
+  `transUser_id` bigint(20) DEFAULT NULL,
+  `transTime` date DEFAULT NULL,
+  `oldSeller_id` bigint(20) DEFAULT NULL,
+  `newSeller_id` bigint(20) DEFAULT NULL,
+  `reason` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `customer_id` (`customer_id`),
+  KEY `transUser_id` (`transUser_id`),
+  KEY `oldSeller_id` (`oldSeller_id`),
+  KEY `newSeller_id` (`newSeller_id`),
+  CONSTRAINT `t_customertranshistory_ibfk_4` FOREIGN KEY (`newSeller_id`) REFERENCES `t_employee` (`id`),
+  CONSTRAINT `t_customertranshistory_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `t_customer` (`id`),
+  CONSTRAINT `t_customertranshistory_ibfk_2` FOREIGN KEY (`transUser_id`) REFERENCES `t_employee` (`id`),
+  CONSTRAINT `t_customertranshistory_ibfk_3` FOREIGN KEY (`oldSeller_id`) REFERENCES `t_employee` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+</update>
+</mapper>

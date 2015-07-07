@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ssm.crm520.mapper.SystemDictionaryTypeMapper">
+	
+	<select id="createTable">
+		create table if not exists t_systemDictionaryType(
+			id bigint primary key auto_increment,
+			name varchar(20),
+			sn varchar(20),
+			intro varchar(100),
+			int status
+		)
+	</select>
+	
+	<insert id="save" parameterType="SystemDictionaryType"  useGeneratedKeys="true">
+		insert into t_systemDictionaryType(name,sn,intro,status) 
+		values(#{name},#{sn},#{intro},#{status})
+	</insert>
+	
+	<delete id="delete" parameterType="long">
+		delete from t_systemDictionaryType where id = #{id}
+	</delete>
+	
+	<update id="update" parameterType="SystemDictionaryType">
+		update t_systemDictionaryType set name=#{name},sn=#{sn},intro=#{intro},status=#{status} where id =#{id}
+	</update>
+	
+	<sql id="replaceSql">
+		select type.*,detail.id did,detail.name dname,detail.sn dsn,detail.intro dintro
+		from t_systemDictionaryType type left join t_systemDictionaryDetail detail on(type.id=detail.type_id)
+	</sql>
+	
+	<resultMap type="SystemDictionaryType" id="typeMap">
+		<id property="id" column="id"/>
+		<result property="name" column="name"/>
+		<result property="sn" column="sn"/>
+		<result property="intro" column="intro"/>
+		<result property="status" column="status"/>
+		<collection property="details" column="id" javaType="arraylist" ofType="SystemDictionaryDetail">
+			<id property="id" column="did"/>
+			<result property="name" column="dname"/>
+			<result property="sn" column="dsn"/>
+			<result property="intro" column="dintro"/>
+		</collection>
+	
+	</resultMap>
+	
+	<select id="get" parameterType="long" resultMap="typeMap">
+		<include refid="replaceSql"/> where type.id = #{id}
+	</select>
+	
+	<select id="getAll" resultMap="typeMap">
+		<include refid="replaceSql"/>
+	</select>
+	
+	<select id="findQuery" parameterType="SystemDictionaryTypeQuery" resultMap="typeMap">
+		<include refid="replaceSql"/>
+		<where>
+			<if test="name!=null">
+				type.name like #{name}
+			</if>
+			<if test="sn!=null">
+				and type.sn like #{sn}
+			</if>
+			<if test="status!=null">
+				and type.status = #{status}
+			</if>
+			<if test="keyword!=null">
+				and (type.name like #{keyword} or type.sn like #{keyword})
+			</if>
+		</where>
+		group by type.id limit #{start},#{rows}
+	</select>
+	
+	<select id="findCount" resultType="long" parameterType="SystemDictionaryTypeQuery">
+		select count(*) from t_systemDictionaryType
+			<where>
+				<if test="name!=null">
+					name like #{name}
+				</if>
+				<if test="sn!=null">
+					and sn like #{sn}
+				</if>
+				<if test="status!=null">
+					and status = #{status}
+				</if>
+				<if test="keyword!=null">
+					and (name like #{keyword} or sn like #{keyword})
+				</if>
+		</where>
+	</select>
+</mapper>

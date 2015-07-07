@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.ssm.crm520.mapper.MenuMapper">
+	<!-- 结果集处理 -->
+	<resultMap type="Menu" id="MenuMapper">
+		<association property="parent" column="parent_id" javaType="Menu" select="get" />
+	</resultMap>
+	<!-- 建表 -->
+	<update id="createTable">
+		CREATE TABLE IF NOT EXISTS `t_menu` (
+		id bigint(20) primary key AUTO_INCREMENT,
+		text varchar(20),
+		url
+		varchar(200),
+		description varchar(200),
+		iconCls varchar(100)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+	</update>
+	<!-- 增加 -->
+	<insert id="save" parameterType="Menu" useGeneratedKeys="true">
+		insert into t_menu
+		(text,url,description,iconCls,parent_id)
+		values(#{text},#{url},#{description},#{iconCls},#{parent.id})
+	</insert>
+	<!-- 删除 -->
+	<delete id="delete" parameterType="long">
+		delete from t_menu
+		where
+		id=#{id}
+	</delete>
+	<!-- 修改 -->
+	<update id="update" parameterType="Menu">
+		update t_menu set
+		text=#{text},url=#{url},description=#{description},iconCls=#{iconCls},parent_id=#{parent.id}
+		where id=#{id}
+	</update>
+	<!-- 查询单个 -->
+	<select id="get" parameterType="long" resultType="Menu">
+		select * from t_menu where id=#{id}
+	</select>
+	<!-- 查询所有 -->
+	<select id="getAll" resultType="Menu">
+		select * from t_menu
+	</select>
+	<!-- 根据父类id查询所有的子菜单 -->
+	<select id="getChildrenMenus" resultType="Menu" parameterType="long">
+		select * from t_menu where parent_id=#{id}
+	</select>
+	<!-- 获取所有的父菜单; -->
+	<select id="getAllParentMenus" resultType="Menu">
+		select * from t_menu where parent_id is null
+	</select>
+	<!-- 高级查询公共的sql -->
+	<sql id="commonSql">
+		<if test="text!=null">
+			text like #{text}
+		</if>
+		<if test="url!=null">
+			and url like #{url}
+		</if>
+		<if test="iconCls!=null">
+			and iconCls like #{iconCls}
+		</if>
+		<if test="description!=null">
+			and description like #{description}
+		</if>
+		<if test="parentId!=null">
+			and parent_id like #{parentId}
+		</if>
+		<if test="keyword!=null">
+			and (text like #{keyword} or url like #{keyword} or iconCls like #{keyword} or description like
+			#{keyword})
+		</if>
+	</sql>
+	<!-- 高级查询菜单集合并分页 -->
+	<select id="findQuery" parameterType="MenuQuery" resultMap="MenuMapper">
+		select * from t_menu
+		<where>
+			<include refid="commonSql" />
+		</where>
+		<if test="order!=null and sort !=null ">
+			order by ${sort} ${order}
+		</if>
+		<if test="start!=null and rows!=null">
+			limit #{start},#{rows}
+		</if>
+	</select>
+	<!-- 高级查询菜单集合并分页 -->
+	<select id="findCount" parameterType="MenuQuery" resultType="long">
+		select count(*) from t_menu
+		<where>
+			<include refid="commonSql" />
+		</where>
+	</select>
+	<sql id="commomPermissionMenuSql">
+		from t_employee e
+		left join t_employee_role er
+		on e.id = er.employee_id
+		left join t_role r
+		on er.role_id = r.id
+		left join t_role_menu rm
+		on rm.role_id = r.id
+		left join t_menu m
+		on rm.menu_id = m.id
+	</sql>
+	<select id="getAllParentMenusByUser" parameterType="long" resultType="Menu">
+		select m.*
+		<include refid="commomPermissionMenuSql"/>
+		where e.id = #{id} and m.parent_id is null
+	</select>
+	
+	<select id="getChildrenMenusByUser" parameterType="map" resultType="Menu">
+		select m.*
+		<include refid="commomPermissionMenuSql"/>
+		where e.id = #{employeeId} and m.parent_id =#{id}
+	</select>
+</mapper>

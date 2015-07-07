@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.SystemLogMapper">
+	<resultMap type="SystemLog" id="SystemLogMapper">
+		<association property="opUser" column="opUser_id" javaType="Employee" select="getEmployee" />
+	</resultMap>
+	<select id="getEmployee" parameterType="long" resultType="Employee">
+		select * from t_employee where id =#{id}
+	</select>
+	<update id="createTable">
+		CREATE TABLE if not exists `t_systemlog` (
+		`id` bigint(20) NOT NULL AUTO_INCREMENT,
+		`opTime` datetime DEFAULT NULL,
+		`opIp` varchar(255) DEFAULT NULL,
+		`function` varchar(255) DEFAULT NULL,
+		`args` varchar(255) DEFAULT NULL,
+		`opUser_id` bigint(20) DEFAULT NULL,
+		PRIMARY KEY (`id`),
+		KEY `t_systemlog_ibfk_1` (`opUser_id`),
+		CONSTRAINT `t_systemlog_ibfk_1` FOREIGN KEY (`opUser_id`) REFERENCES `t_employee` (`id`)
+		) ENGINE=InnoDB AUTO_INCREMENT=109 DEFAULT CHARSET=utf8;
+
+	</update>
+	<insert id="save" useGeneratedKeys="true" parameterType="SystemLog">
+		insert into t_systemLog
+		(opUser_id,opTime,opIp,function,args)
+		VALUES
+		(#{opUser.id},#{opTime},#{opIp},#{function},#{args})
+	</insert>
+	<update id="update" parameterType="SystemLog">
+		update t_systemLog set
+		opUser_id = #{opUser.id},opTime= #{opTime},opIp =
+		#{opIp},function=#{function},args=#{args}
+		where id = #{id}
+	</update>
+	<delete id="delete">
+		delete from t_systemLog where id = #{id}
+	</delete>
+	<sql id="selectCommonSql">
+		from t_systemLog sl
+		left join t_employee e
+		on sl.opUser_id = e.id
+	</sql>
+	<select id="get" resultMap="SystemLogMapper" parameterType="long">
+		select sl.*
+		<include refid="selectCommonSql" />
+		where sl.id = #{id}
+	</select>
+
+	<select id="getAll" resultMap="SystemLogMapper">
+		select sl.*
+		<include refid="selectCommonSql" />
+	</select>
+
+	<select id="findQuery" parameterType="SystemLogQuery" resultMap="SystemLogMapper">
+		select sl.*
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+		<if test="sort!=null and order!=null">
+			order by
+			<choose>
+				<when test="sort=='opUser' ">
+					sl.${sort}_id
+				</when>
+				<otherwise>
+					sl.${sort}
+				</otherwise>
+			</choose>
+			${order}
+		</if>
+		<if test="start!=null and rows!=null">
+			limit #{start},#{rows}
+		</if>
+	</select>
+	<select id="findCount" parameterType="SystemLogQuery" resultType="long">
+		select count(sl.id)
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+	</select>
+
+	<sql id="commonQuerySql">
+		<where>
+			<if test="keyword != null">
+			</if>
+			<if test="opUserId != null">
+				and opUser_id = #{opUserId}
+			</if>
+			<if test="minOpTime != null">
+				and opTime >= #{minOpTime}
+			</if>
+			<if test="maxOpTime != null">
+				and opTime &lt;= #{maxOpTime}
+			</if>
+			<if test="maxOpTime != null">
+				and opTime &lt;= #{maxOpTime}
+			</if>
+			<if test="opIp != null">
+				and opIp like #{opIp}
+			</if>
+			<if test="function != null">
+				and function like #{function}
+			</if>
+			<if test="args != null">
+				and args like #{args}
+			</if>
+		</where>
+	</sql>
+
+</mapper>

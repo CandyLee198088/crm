@@ -1,0 +1,32 @@
+[
+	{
+		"id":1,
+		"text":"员工管理",
+		"iconCls":"icon-user",
+		"children":[{
+			"id":2,
+			"text":"部门管理",
+			"attributes":{
+				"url":"/department/"
+			}
+		}]
+	},{
+		"id":2,
+		"text":"部门管理",
+		"attributes":{
+			"url":"/department/"
+		}
+	},{
+		"id":3,
+		"text":"菜单管理",
+		"attributes":{
+			"url":"/menu/"
+		}
+	},{
+		"id":4,
+		"text":"数据字典",
+		"attributes":{
+			"url":"/systemDictionary/"
+		}
+	}
+]

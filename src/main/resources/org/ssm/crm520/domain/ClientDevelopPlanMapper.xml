@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="org.ssm.crm520.mapper.ClientDevelopPlanMapper">
+	<resultMap type="ClientDevelopPlan" id="ClientDevelopPlanMapper">
+		<association property="execWay" column="execWay_id" javaType="SystemDictionaryDetail" select="getSystemDictionaryDetail" />
+		<association property="createStaff" javaType="Employee" column="createStaff_id" select="getEmployee" />
+		<association property="pClient" javaType="PotentialClient" column="pClient_id" select="getPotentialClient" />
+	</resultMap>
+	<select id="getSystemDictionaryDetail" parameterType="long" resultType="SystemDictionaryDetail">
+		select * from t_systemdictionarydetail
+		where id=#{id}
+	</select>
+	<select id="getEmployee" parameterType="long" resultType="Employee">
+		select * from t_employee where id =#{id}
+	</select>
+	<select id="getPotentialClient" parameterType="long" resultType="PotentialClient">
+		select * from t_potentialClient where id =#{id}
+	</select>
+	<update id="createTable">
+		CREATE TABLE IF NOT EXISTS `t_clientdevelopplan` (
+		`id` bigint(20) NOT NULL AUTO_INCREMENT,
+		`sn` varchar(255) DEFAULT NULL,
+		`planTime` datetime DEFAULT NULL,
+		`content` varchar(255) DEFAULT NULL,
+		`summary` varchar(255) DEFAULT NULL,
+		`execWay_id` bigint(20) DEFAULT NULL,
+		`pClient_id` bigint(20) DEFAULT NULL,
+		`createStaff_id` bigint(20) DEFAULT NULL,
+		`createTime` datetime DEFAULT NULL,
+		PRIMARY KEY (`id`),
+		KEY `execWay_id` (`execWay_id`),
+		KEY `pClient_id` (`pClient_id`),
+		KEY `createStaff_id` (`createStaff_id`),
+		CONSTRAINT `t_clientdevelopplan_ibfk_3` FOREIGN KEY (`createStaff_id`) REFERENCES `t_employee` (`id`),
+		CONSTRAINT `t_clientdevelopplan_ibfk_1` FOREIGN KEY (`execWay_id`) REFERENCES `t_systemdictionarydetail` (`id`),
+		CONSTRAINT `t_clientdevelopplan_ibfk_2` FOREIGN KEY (`pClient_id`) REFERENCES `t_potentialclient` (`id`)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+	</update>
+	<insert id="save" useGeneratedKeys="true" parameterType="ClientDevelopPlan">
+		insert into t_clientDevelopPlan
+		(sn,planTime,summary,content,execWay_id,pClient_id,createStaff_id,createTime)
+		VALUES
+		(#{sn},#{planTime},#{summary},#{content},#{execWay.id},#{pClient.id},#{createStaff.id},#{createTime})
+	</insert>
+	<update id="update" parameterType="ClientDevelopPlan">
+		update t_clientDevelopPlan set
+		planTime = #{planTime},summary=
+		#{summary},content=#{content},execWay_id=#{execWay.id},pClient_id=#{pClient.id}
+		where id = #{id}
+	</update>
+	<delete id="delete">
+		delete from t_clientDevelopPlan where id = #{id}
+	</delete>
+	<sql id="selectCommonSql">
+		from t_clientDevelopPlan cdp
+		left join t_systemdictionarydetail sd
+		on cdp.execWay_id = sd.id
+		left join t_potentialClient pc
+		on cdp.pClient_id = pc.id
+		left join t_employee e
+		on cdp.createStaff_id = e.id
+	</sql>
+	<select id="get" resultMap="ClientDevelopPlanMapper" parameterType="long">
+		select cdp.*
+		<include refid="selectCommonSql" />
+		where cdp.id = #{id}
+	</select>
+
+	<select id="getAll" resultMap="ClientDevelopPlanMapper">
+		select cdp.*
+		<include refid="selectCommonSql" />
+	</select>
+
+	<select id="findQuery" parameterType="ClientDevelopPlanQuery" resultMap="ClientDevelopPlanMapper">
+		select cdp.*
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+		<if test="sort!=null and order!=null">
+			order by
+			<choose>
+				<when test="sort=='execWay' or sort=='pClient' or sort=='createStaff'">
+					cdp.${sort}_id
+				</when>
+				<otherwise>
+					cdp.${sort}
+				</otherwise>
+			</choose>
+			${order}
+		</if>
+		<if test="start!=null and rows!=null">
+			limit #{start},#{rows}
+		</if>
+	</select>
+	<select id="findCount" parameterType="ClientDevelopPlanQuery" resultType="long">
+		select count(cdp.id)
+		<include refid="selectCommonSql" />
+		<include refid="commonQuerySql" />
+	</select>
+
+	<sql id="commonQuerySql">
+		<where>
+			<if test="keyword != null">
+			</if>
+			<if test="sn != null">
+				and sn like #{sn}
+			</if>
+			<if test="minPlanTime != null">
+				and planTime >= #{minPlanTime}
+			</if>
+			<if test="maxPlanTime != null">
+				and planTime &lt;= #{maxPlanTime}
+			</if>
+			<if test="summary != null">
+				and summary like #{summary}
+			</if>
+			<if test="execWayId != null">
+				and execWay_id like #{execWayId}
+			</if>
+			<if test="pClientId != null">
+				and pClient_id like #{pClientId}
+			</if>
+			<if test="createStaffId != null">
+				and createStaff_id like #{createStaffId}
+			</if>
+			<if test="minCreateTime != null">
+				and createTime >= #{minCreateTime}
+			</if>
+			<if test="maxCreateTime != null">
+				and createTime &lt;= #{maxCreateTime}
+			</if>
+		</where>
+	</sql>
+
+</mapper>

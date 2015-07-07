@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 public class ClientDevelopPlan extends IdEntity {
 
+	
 	private static final long serialVersionUID = 1L;
 	private String sn;
 	private Date planTime;
